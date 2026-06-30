@@ -1,0 +1,140 @@
+┌──────────────────────────────────────────────┐
+│                Rust Backend                  │
+│                                              │
+│  AppWindow instance (your UI handle)         │
+│                                              │
+│  properties:                                 │
+│    dec : String  ◄──────────────┐            │
+│    hexa: String  ◄──────────────┐            │
+│                                  │            │
+│  callbacks:                      │            │
+│    convert() ───────────────┐   │            │
+└─────────────────────────────│───│────────────┘
+                              │   │
+                              │   │
+                              ▼   ▼
+
+┌──────────────────────────────────────────────┐
+│                 Slint UI                     │
+│                                              │
+│  LineEdit (dec)                              │
+│   text <=> root.dec ───────┐                 │
+│                             │                 │
+│  LineEdit (hexa)           │                 │
+│   text <=> root.hexa ──────┘                 │
+│                                              │
+│  Button "Convert"                            │
+│   clicked → root.convert() ───────────────┐  │
+└───────────────────────────────────────────│──┘
+                                            │
+                                            ▼
+                                   Rust handler runs
+
+What actually happens step-by-step
+
+1. User types in UI
+
+    LineEdit (dec)
+
+Because of:
+
+    text <=> root.dec;
+
+👉 Slint automatically updates:
+
+    root.dec (Rust-side property)
+
+No Rust code runs yet.
+
+2. User clicks button
+
+    clicked => { root.convert(); }
+
+Now:
+
+👉 Slint calls Rust callback:
+
+    ui.on_convert(...)
+
+3. Rust reads state
+
+    Rust:
+    let dec = ui.get_dec();
+    let hexa = ui.get_hexa();
+
+At this point:
+
+- UI already updated properties
+- Rust just reads current snapshot
+
+🧩 Key insight (this is the important part)
+
+
+Slint has two separate worlds:
+
+🟦 UI world (reactive)
+- properties update automatically
+- bindings update automatically
+- no Rust execution
+🟧 Rust world (event-driven)
+- runs ONLY on callbacks
+- reads/writes properties on demand
+
+
+⚠️ Important clarification about your mental model
+
+You might have thought:
+
+    “properties automatically trigger Rust code”
+
+❌ That is NOT how Slint works
+
+Instead:
+
+Action	            What happens
+user types	        UI updates property
+property changes	UI reacts (bindings)
+Rust runs	        ONLY if callback is triggered
+
+🧠 The simplest correct mental model
+
+Think of it like this:
+
+    Slint UI = live spreadsheet
+    Rust = calculator triggered by button presses
+
+- cells update automatically (properties)
+- formulas update automatically (bindings)
+- but Rust only runs when you press “calculate” (callback)
+
+🔥 Why this design is powerful
+
+Because it gives you:
+
+✔ Reactive UI without Rust overhead
+- instant updates
+- no manual syncing
+✔ Controlled Rust execution
+- no accidental recomputation
+- predictable performance
+- explicit event flow
+
+🧪 Your chosen architecture (correct version)
+
+You are using:
+
+Slint
+- properties = state
+- LineEdit binds to properties
+- button triggers callback
+Rust
+- reads state only when needed
+- performs conversion logic
+
+This is exactly the recommended pattern for small tools like converters.
+
+🧭 One-line summary
+
+👉 Slint properties are “shared live state”
+👉 callbacks are “manual Rust entry points”
+👉 layouts are only visual grouping, not logic scope

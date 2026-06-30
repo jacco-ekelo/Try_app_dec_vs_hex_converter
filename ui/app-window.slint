@@ -1,0 +1,74 @@
+import { Button, LineEdit } from "std-widgets.slint";
+
+export component AppWindow inherits Window {
+    background: #444444;
+
+    in-out property <string> dec;
+    in-out property <string> hexa;
+    in property <string> err_msg;
+
+    callback convert();
+    callback clear();
+
+    title: "Hex Dec Converter";
+    icon: @image-url("../res/icon-icons.png");
+
+    width: 400px;
+    height: 400px;
+
+
+
+    GridLayout {
+        padding: 50px;
+        spacing: 25px;
+
+        Row {
+            Text {
+                text: "Hexa-Decimal Converter";
+                horizontal-alignment: center;
+                color: white;
+                font-size: 20px;
+                font-weight: 700;
+                colspan: 1; // Explicitly defining spans can help layout stability
+            }
+        }
+
+        Row {
+            LineEdit {
+                // MODERN: Single line handles both reading and writing
+                text <=> root.dec;
+                placeholder-text: "Decimal";
+            }
+        }
+
+        Row {
+            LineEdit {
+                // MODERN: No need for manual edited(text) => { ... }
+                text <=> root.hexa;
+                placeholder-text: "Hexadecimal (without # prefix)";
+            }
+        }
+
+        Row {
+            Text {
+                text <=> root.err_msg;
+                color: red;
+            }
+        }
+
+        Row {
+            Button {
+                text: "Convert";
+                primary: true;
+                clicked => { root.convert(); }
+            }
+        }
+
+        Row {
+                    Button {
+                        text: "Clear";
+                        clicked => { root.clear(); }
+                    }
+                }
+    }
+}
